@@ -1,0 +1,7 @@
+
+// custom language tags with colorations mostly for debugging.
+[en enc eng eni ena enz default]
+TAG_SLURPSHERE="\chSoul Sphere";
+TAG_MegaSlurp="\ceSoul Sphere";
+TAG_SLURPSHERE="\chSoul Sphere";
+

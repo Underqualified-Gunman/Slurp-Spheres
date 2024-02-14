@@ -1,0 +1,244 @@
+// hd healing refs	drinking a sphere = 30 sips, 12 sips per bottle
+//	
+//	HDHM_BALL=210,
+//	HDHM_BOTTLE=12,
+//	HDHM_MOUTH=7,
+//
+
+version "4.3"
+//-------------------------------------------------
+// drinkable soulsphere
+//-------------------------------------------------
+class SlurpableSphere:HDHealingPotion
+{
+	default{
+		//$Category "Items/Hideous Destructor/Magic"
+		//$Title "Soul Sphere"
+		//$Sprite "SOULA0"
+		alpha 0.8;
+		scale 0.8;
+		+inventory.ishealth
+		+weapon.wimpy_weapon
+		+weapon.no_auto_switch
+		+inventory.invbar
+		+hdweapon.fitsinbackpack
+		weapon.selectionorder 1000;
+		inventory.pickupmessage "$PICKUP_SLURPSHERE";
+		inventory.pickupsound "potion/swish";
+		tag "$TAG_SLURPSHERE";
+		inventory.icon "SOULA0";
+
+	}
+	
+	override string,double getpickupsprite()
+	{return "SOULA0",1.;}
+	
+	override double weaponbulk()
+	{
+		return (ENC_POTION*0.7)+(ENC_POTION*0.04)*weaponstatus[HDHM_AMOUNT];
+	}
+	
+	override string gethelptext()
+	{	LocalizeHelp();
+		return LWPHELP_FIRE..StringTable.Localize("$HEALWH_FIRE");
+	}
+	
+	override void DrawHUDStuff(HDStatusBar sb,HDWeapon hdw,HDPlayerPawn hpl)
+	{
+		sb.drawimage("SOULA0",(-23,-7),sb.DI_SCREEN_CENTER_BOTTOM|sb.DI_ITEM_RIGHT);
+		sb.drawwepnum(hdw.weaponstatus[HDHM_AMOUNT],30);
+	}
+	
+	override int getsbarnum(int flags)
+	{
+		return weaponstatus[HDHM_AMOUNT];
+	}
+	
+	override void InitializeWepStats(bool idfa)
+	{
+		weaponstatus[HDHM_AMOUNT]=30;
+	}
+	
+	override bool AddSpareWeapon(actor newowner)
+	{
+	return AddSpareWeaponRegular(newowner);
+	}
+	
+	override hdweapon GetSpareWeapon(actor newowner,bool reverse,bool doselect)
+	{
+		if(weaponstatus[INJECTS_AMOUNT]<1)doselect=false;
+		return GetSpareWeaponRegular(newowner,reverse,doselect);
+	}
+	
+	states(actor)
+	{
+		spawn:
+		TNT1 A 1 nodelay
+		{
+			if(weaponstatus[INJECTS_AMOUNT]>0)
+			{
+				if(Wads.CheckNumForName("id",0)!=-1)
+				{
+					setstatelabel("jiggling");
+					return;
+				}
+				scale=(0.5,0.5);
+				if(floorz<pos.z)setstatelabel("plucked");
+				else setstatelabel("planted");
+			}
+		}
+		SOUL A 0{
+			//actor a=null;
+			//a=spawn("SpentBottle",pos,ALLOW_REPLACE);
+			A_StartSound("soulsphere/shatter",CHAN_BODY);
+			//a.angle=angle;a.pitch=pitch;a.target=target;a.vel=vel;
+			return;
+			//the cork only matters for id
+			if(Wads.CheckNumForName("id",0)==-1)return;
+			let aa=spawn("SpentCork",pos,ALLOW_REPLACE);
+			aa.angle=angle+3;
+			aa.vel=vel+(frandom(-1,1),frandom(-1,1),frandom(0,1));
+		}
+		stop;
+	planted:
+		SOUL ABCDCB 4 light("SOULSPHERE");
+		loop;
+	plucked:
+		SOUL E -1;
+		stop;
+	jiggling:
+		SOUL ABCDCB 2 light("SOULSPHERE") A_SetTics(random(1,3));
+		loop;
+	}
+	states
+	{
+	select:
+		TNT1 A 0{
+			if(DoHelpText())A_WeaponMessage(Stringtable.Localize("$POTION_TEXT1"));
+			A_StartSound("potion/swish",8,CHANF_OVERLAP);
+		}
+		goto super::select;
+	deselect:
+		TNT1 A 10{
+			if(invoker.weaponstatus[HDHM_AMOUNT]<1){
+				DropInventory(invoker);
+				return;
+			}
+			A_StartSound("potion/swish",8,CHANF_OVERLAP);
+		}
+		TNT1 A 0 A_Lower(999);
+		wait;
+	fire:
+		TNT1 A 0{
+			let blockinv=HDWoundFixer.CheckCovered(self,CHECKCOV_CHECKFACE);
+			if(blockinv){
+				A_TakeOffFirst(blockinv.gettag(),2);
+				A_Refire("nope");
+			}
+		}
+		TNT1 A 4 A_WeaponReady(WRF_NOFIRE);
+		TNT1 A 1{
+			A_StartSound("potion/open",CHAN_WEAPON);
+			A_Refire();
+		}
+		TNT1 A 0 A_StartSound("potion/swish",8);
+		goto nope;
+	hold:
+		TNT1 A 1;
+		TNT1 A 0{
+			A_WeaponBusy();
+			let blockinv=HDWoundFixer.CheckCovered(self,CHECKCOV_CHECKFACE);
+			if(blockinv){
+				A_TakeOffFirst(blockinv.gettag(),2);
+				A_Refire("nope");
+			}else if(pitch>-55){
+				A_MuzzleClimb(0,-8);
+				A_Refire();
+			}else{
+				A_Refire("inject");
+			}
+		}
+		TNT1 A 0 A_StartSound("potion/away",CHAN_WEAPON,volume:0.4);
+		goto nope;
+	inject:
+		TNT1 A 7{
+			A_MuzzleClimb(0,-2);
+			if(invoker.weaponstatus[HDHM_AMOUNT]>0){
+				invoker.weaponstatus[HDHM_AMOUNT]--;
+				A_StartSound("potion/chug",CHAN_VOICE);
+				HDF.Give(self,"HealingMagic",HDHM_MOUTH);
+			}
+		}
+		TNT1 AAAAA 1 A_MuzzleClimb(0,0.5);
+		TNT1 A 5 A_JumpIf(!pressingfire(),"injectend");
+		goto hold;
+	injectend:
+		TNT1 A 6;
+		TNT1 A 0{
+			if(invoker.weaponstatus[HDHM_AMOUNT]>0)A_StartSound("potion/away",CHAN_WEAPON,volume:0.4);
+		}
+		goto nope;
+	}
+}
+
+
+
+
+
+class SlurpableMegaSphere:HDAmBoxDisarmed{
+		//$Category "Items/Hideous Destructor/Magic"
+		//$Title "Megasphere"
+		//$Sprite "MEGAA0"
+		
+	default
+	{
+		tag "$TAG_MegaSlurp";
+		scale 0.8;
+	}
+	
+	override void SpawnContents()
+	{
+		A_SpawnItemEX("SlurpableSphere",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0);
+		picktarget.A_GiveInventory("ShieldCore");
+		let scc=picktarget.findinventory("ShieldCore");
+		if(
+			scc
+			&&!picktarget.countinv("HDMagicShield")
+			&&picktarget.player
+		){
+			int btbak=picktarget.player.cmd.buttons;
+			picktarget.player.cmd.buttons&=~BT_USE;
+			picktarget.UseInventory(scc);
+			picktarget.player.cmd.buttons=btbak;
+		}
+	}
+	states{
+	spawn:
+		MEGA ABCD random(2,7) nodelay{tapped=true;} loop; 
+		loop;
+	}
+}
+
+
+
+
+
+
+
+// replacers cordened off for ease of name grabbing
+
+class BluesphereReplacer : RandomSpawner replaces HDSoulSphere
+{
+	Default
+	{
+		DropItem "SlurpableSphere", 255, 1;
+	}
+}
+
+class MegasphereReplacer : RandomSpawner replaces HDMegasphere
+{
+	Default
+	{
+		DropItem "SlurpableMegaSphere", 255, 1;
+	}
+}
