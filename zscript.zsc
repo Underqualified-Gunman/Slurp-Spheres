@@ -215,7 +215,7 @@ class SlurpableMegaSphere:HDAmBoxDisarmed{
 	states{
 	spawn:
 		MEGA ABCD random(2,7) nodelay{tapped=true;} loop; 
-		loop;
+		
 	}
 }
 

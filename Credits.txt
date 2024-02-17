@@ -1,6 +1,9 @@
-matt for HD and his potion & disarmed ammo box code
-nathanolson for the soulsphere shattering sound
-underqualified gunman for mod assembly. 
+Matt for HD and his potion & disarmed ammo box code which this mod extends off of.
+nathanolson on youtube glass breaking sound i used for the soulsphere shattering sound
+Underqualified Gunman for mod assembly. 
+Accensus for his mod potion sphere for which this is a spiritual succsessor to.
+Undead Zeratul for helping out with the bubbles support
+
 
 license/reuse/permissions
-provide an intact credits file and don't sell access to it. Other wise do whatever you wish.
+provide an intact credits file and don't sell access to it. Other wise do as you wish.
