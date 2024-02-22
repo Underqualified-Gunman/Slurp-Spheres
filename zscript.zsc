@@ -1,14 +1,18 @@
-// hd healing refs	drinking a sphere = 30 sips, 12 sips per bottle
-//	
+// hd healing refs	drinking a sphere = 30 sips, 12 sips per bottle 
+//	old sphere 30
+//  new one 15
 //	HDHM_BALL=210,
 //	HDHM_BOTTLE=12,
 //	HDHM_MOUTH=7,
-//
+// mouth is *2 but amount is now 15 from 30
 
 version "4.3"
 //-------------------------------------------------
 // drinkable soulsphere
 //-------------------------------------------------
+
+const ENC_SPHERE = 50;
+
 class SlurpableSphere:HDHealingPotion
 {
 	default{
@@ -34,8 +38,9 @@ class SlurpableSphere:HDHealingPotion
 	{return "SOULA0",1.;}
 	
 	override double weaponbulk()
+	// base bulk of item
 	{
-		return (ENC_POTION*0.7)+(ENC_POTION*0.04)*weaponstatus[HDHM_AMOUNT];
+		return (ENC_SPHERE)+(weaponstatus[HDHM_AMOUNT]*7.77);
 	}
 	
 	override string gethelptext()
@@ -46,7 +51,7 @@ class SlurpableSphere:HDHealingPotion
 	override void DrawHUDStuff(HDStatusBar sb,HDWeapon hdw,HDPlayerPawn hpl)
 	{
 		sb.drawimage("SOULA0",(-23,-7),sb.DI_SCREEN_CENTER_BOTTOM|sb.DI_ITEM_RIGHT);
-		sb.drawwepnum(hdw.weaponstatus[HDHM_AMOUNT],30);
+		sb.drawwepnum(hdw.weaponstatus[HDHM_AMOUNT],15);
 	}
 	
 	override int getsbarnum(int flags)
@@ -56,7 +61,7 @@ class SlurpableSphere:HDHealingPotion
 	
 	override void InitializeWepStats(bool idfa)
 	{
-		weaponstatus[HDHM_AMOUNT]=30;
+		weaponstatus[HDHM_AMOUNT]=15;
 	}
 	
 	override bool AddSpareWeapon(actor newowner)
@@ -166,7 +171,7 @@ class SlurpableSphere:HDHealingPotion
 			if(invoker.weaponstatus[HDHM_AMOUNT]>0){
 				invoker.weaponstatus[HDHM_AMOUNT]--;
 				A_StartSound("potion/chug",CHAN_VOICE);
-				HDF.Give(self,"HealingMagic",HDHM_MOUTH);
+				HDF.Give(self,"HealingMagic",HDHM_MOUTH*2);
 			}
 		}
 		TNT1 AAAAA 1 A_MuzzleClimb(0,0.5);
